@@ -66,15 +66,14 @@ public class App {
                             }
                         }
                     }else if (user.getRole().equals("ADMIN")) {
-                        while (selection!=7) {
+                        while (selection!=6) {
 
                             System.out.println("1. Rent vehicle");
                             System.out.println("2. Return Vehicle");
                             System.out.println("3. Show available vehicles");
                             System.out.println("4. Add vehicle");
                             System.out.println("5. Remove vehicle");
-                            System.out.println("6. Show all users");
-                            System.out.println("7. Log out");
+                            System.out.println("6. Log out");
                             selection = scanner1.nextInt();
                             scanner1.nextLine();
                             if (selection == 1) {
@@ -124,12 +123,9 @@ public class App {
                                         .max().orElse(0)+1);
                                 Vehicle vehicle=new Vehicle(id, category, brand, model, year, plate, price, atributes);
                                 vehicleService.addVehicle(vehicle);
-                            } else if (selection==5) {
-                                System.out.println("Enter id");
-                                String id=scanner1.nextLine();
-                                vehicleService.removeVehicle(id);
 
-                            } else if (selection==6) {
+
+                            } else if (selection==5) {
                                 authService.getUsers();
                             }
                         }

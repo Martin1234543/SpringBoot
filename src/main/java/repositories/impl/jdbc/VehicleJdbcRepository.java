@@ -107,7 +107,12 @@ public class VehicleJdbcRepository implements VehicleRepository {
 
     @Override
     public void deleteById(String id) {
-        String sql = "DELETE FROM vehicle WHERE id = ?";
+        String sql = "UPDATE vehicle\n" +
+                "SET brand = NULL,\n" +
+                "    model = NULL,\n" +
+                "    year = NULL\n" +
+                "    category = NULL\n" +
+                "WHERE id = ?;\n";
         try (Connection connection = JdbcConnectionManager.getInstance().getConnection();
              PreparedStatement stmt = connection.prepareStatement(sql)) {
 

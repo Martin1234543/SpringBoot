@@ -69,4 +69,3 @@ public class RentalService {
     }
     }
 
-//TODO Zrob dobre wyswietlanie i i wypozyczanie

@@ -18,7 +18,7 @@ public class UserJdbcRepository implements UserRepository {
     @Override
     public List<User> findAll() {
         List<User> list = new ArrayList<>();
-        String sql = "SELECT * FROM users";  // <-- poprawiona tabela
+        String sql = "SELECT * FROM users";
 
         try (Connection connection = JdbcConnectionManager.getInstance().getConnection();
              PreparedStatement stmt = connection.prepareStatement(sql);
