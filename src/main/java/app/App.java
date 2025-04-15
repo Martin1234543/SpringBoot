@@ -39,6 +39,7 @@ public class App {
                 String password= scanner1.nextLine();
                 if(authService.login(login, password).isPresent()){
                     User user=authService.login(login, password).get();
+                    String userID= user.getId();
                     System.out.println("Welcome "+login+".");
                     if (user.getRole().equals("USER")) {
                     while (selection!=4) {
@@ -52,7 +53,7 @@ public class App {
                             if (selection == 1) {
                                 System.out.println("Select id of vehicle:");
                                 String id = scanner1.nextLine();
-                                if (rentalService.rentVehicle(id, user)) {
+                                if (rentalService.rent(id, userID)) {
                                     System.out.println("Successfully rented.");
                                 } else {
                                     System.out.println("Couldn't rent.");
@@ -60,9 +61,10 @@ public class App {
                             } else if (selection == 2) {
                                 System.out.println("Select id of vehicle:");
                                 String id = scanner1.nextLine();
-                                rentalService.returnVehicle(id, user);
+                                rentalService.returnRental(id, userID);
                             } else if (selection == 3) {
-                                vehicleService.showAll();
+
+                                vehicleService.findAll();
                             }
                         }
                     }else if (user.getRole().equals("ADMIN")) {
@@ -72,14 +74,14 @@ public class App {
                             System.out.println("2. Return Vehicle");
                             System.out.println("3. Show available vehicles");
                             System.out.println("4. Add vehicle");
-                            System.out.println("5. Remove vehicle");
+                            System.out.println("5. Show users");//TODO: dodaj usuwanie vehiclow
                             System.out.println("6. Log out");
                             selection = scanner1.nextInt();
                             scanner1.nextLine();
                             if (selection == 1) {
                                 System.out.println("Select id of vehicle:");
                                 String id = scanner1.nextLine();
-                                if (rentalService.rentVehicle(id, user)) {
+                                if (rentalService.rent(id, userID)) {
                                     System.out.println("Successfully rented.");
                                 } else {
                                     System.out.println("Couldn't rent.");
@@ -87,7 +89,7 @@ public class App {
                             } else if (selection == 2) {
                                 System.out.println("Select id of vehicle:");
                                 String id = scanner1.nextLine();
-                                rentalService.returnVehicle(id, user);
+                                rentalService.returnRental(id, userID);
                             } else if (selection == 3) {
                                 vehicleService.showAll();
                             } else if (selection==4) {
@@ -116,12 +118,12 @@ public class App {
                                     System.out.println("Do you want to add another one?(yes/no)");
                                     isAtt=scanner1.nextLine();
                                 }
-                                List<Vehicle> vehicles=vehicleService.getAll();
+                                List<Vehicle> vehicles=vehicleService.findAll();
                                 String id= String.valueOf(vehicles.stream().mapToInt(vehicle->{
                                             return Integer.parseInt((vehicle.getId()));
                                         })
                                         .max().orElse(0)+1);
-                                Vehicle vehicle=new Vehicle(id, category, brand, model, year, plate, price, atributes);
+                                Vehicle vehicle=new Vehicle(id, price, category, brand, model, year, plate, atributes);
                                 vehicleService.addVehicle(vehicle);
 
 

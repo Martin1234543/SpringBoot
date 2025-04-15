@@ -46,11 +46,10 @@ public class RentalJsonRepository implements RentalRepository {
         storage.save(rentals);
     }
 
-    //TODO: Użycie funkcji findByVehicleIdAndReturnDateIsNull w swojej logice
     @Override
     public Optional<Rental> findByVehicleIdAndReturnDateIsNull(String vehicleId) {
         return findAll().stream()
-                .filter(r -> r.getVehicleId().equals(vehicleId)
+                .filter(r -> r.getId().equals(vehicleId)
                         && (r.getReturnDate() == null || r.getReturnDate().isBlank()))
                 .findFirst();
     }
