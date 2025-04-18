@@ -19,7 +19,7 @@ public class VehicleHibernateRepository implements VehicleRepository {
 
     @Override
     public List<Vehicle> findAll() {
-        return session.createQuery("FROM Vehicle", Vehicle.class).list();
+        return session.createQuery("FROM Vehicle WHERE brand IS NOT NULL", Vehicle.class).list();
     }
 
     @Override

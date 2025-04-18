@@ -64,7 +64,7 @@ public class App {
                                 rentalService.returnRental(id, userID);
                             } else if (selection == 3) {
 
-                                vehicleService.findAll();
+                                vehicleService.showAll();
                             }
                         }
                     }else if (user.getRole().equals("ADMIN")) {

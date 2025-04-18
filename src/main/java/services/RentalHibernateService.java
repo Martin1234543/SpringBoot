@@ -11,6 +11,7 @@ import repositories.impl.jdbc.VehicleHibernateRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public class RentalHibernateService implements RentalService {
@@ -68,8 +69,32 @@ public class RentalHibernateService implements RentalService {
 
     @Override
     public boolean returnRental(String vehicleId, String userId) {
+        Transaction tx = null;
+        try (Session session = HibernateConfig.getSessionFactory().openSession()) {
+            tx = session.beginTransaction();
+            rentalRepo.setSession(session);
+
+            Optional<Rental> rentalOptional = rentalRepo.findByVehicleIdAndReturnDateIsNull(vehicleId);
+            if (rentalOptional.isPresent()) {
+                Rental rental = rentalOptional.get();
+                if (rental.getUser().getId().equals(userId)) {
+                    rental.setReturnDate(LocalDateTime.now().toString());
+                    rentalRepo.save(rental);
+                    tx.commit();
+                    return true;
+                }
+            }else {
+                System.out.println("The vehicle isn't available.");
+            }
+
+            if (tx != null && tx.isActive()) tx.rollback();
+        } catch (Exception e) {
+            if (tx != null && tx.isActive()) tx.rollback();
+            e.printStackTrace();
+        }
         return false;
     }
+
 
     @Override
     public List<Rental> findAll() {

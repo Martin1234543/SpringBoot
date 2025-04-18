@@ -2,23 +2,27 @@ package repositories.impl.json;
 
 import com.google.gson.reflect.TypeToken;
 import db.JsonFileStorage;
-import models.Rental;
 import models.Vehicle;
+import models.VehicleJSON;
 import repositories.VehicleRepository;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class VehicleJsonRepository implements VehicleRepository {
-    private final JsonFileStorage<Vehicle> storage =
-            new JsonFileStorage<>("vehicles.json", new TypeToken<List<Vehicle>>(){}.getType());
+
+    private final JsonFileStorage<VehicleJSON> storage =
+            new JsonFileStorage<>("vehicles.json", new TypeToken<List<VehicleJSON>>() {}.getType());
 
     private final List<Vehicle> vehicles;
 
     public VehicleJsonRepository() {
-        this.vehicles = new ArrayList<>(storage.load());
+        this.vehicles = storage.load().stream()
+                .map(VehicleJSON::getVehicle)
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     @Override
@@ -39,12 +43,21 @@ public class VehicleJsonRepository implements VehicleRepository {
             deleteById(vehicle.getId());
         }
         vehicles.add(vehicle);
-        storage.save(vehicles);
-        return vehicle;    }
+
+        List<VehicleJSON> toSave = vehicles.stream()
+                .map(v -> new VehicleJSON(UUID.randomUUID().toString(), v))
+                .collect(Collectors.toList());
+        storage.save(toSave);
+
+        return vehicle;
+    }
 
     @Override
     public void deleteById(String id) {
         vehicles.removeIf(r -> r.getId().equals(id));
-        storage.save(vehicles);
+        List<VehicleJSON> toSave = vehicles.stream()
+                .map(v -> new VehicleJSON(UUID.randomUUID().toString(), v))
+                .collect(Collectors.toList());
+        storage.save(toSave);
     }
 }

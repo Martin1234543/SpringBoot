@@ -1,5 +1,6 @@
 package repositories.impl.jdbc;
 
+import lombok.Setter;
 import models.Rental;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
@@ -8,12 +9,9 @@ import repositories.RentalRepository;
 import java.util.List;
 import java.util.Optional;
 
+@Setter
 public class RentalHibernateRepository implements RentalRepository {
     private Session session;
-
-    public void setSession(Session session) {
-        this.session = session;
-    }
 
     @Override
     public List<Rental> findAll() {
