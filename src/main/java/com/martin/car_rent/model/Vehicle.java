@@ -22,17 +22,16 @@ import java.util.Map;
 @Builder
 public class Vehicle {
     @Id
-    @Column(nullable = false, unique = true)
+    @Column(unique = true)
     private String id;
     @Column(columnDefinition = "NUMERIC")
     private double price;
     private String category;
     private String brand;
     private String model;
-    @Column(nullable = true)
     private int year;
     private String plate;
-    @Column(nullable = false)
+    @Column(name = "is_active", nullable = false)
     private boolean isActive;
 
 
