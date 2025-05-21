@@ -18,4 +18,5 @@ public class CarRentApplication {
 			public String helloWorld() {
 				return String.format("Hello");
 			}
+
 		};

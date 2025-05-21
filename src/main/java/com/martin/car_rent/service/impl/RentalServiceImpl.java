@@ -1,5 +1,6 @@
 package com.martin.car_rent.service.impl;
 
+import com.martin.car_rent.dto.RentalRequest;
 import com.martin.car_rent.model.Rental;
 import com.martin.car_rent.model.User;
 import com.martin.car_rent.model.Vehicle;
@@ -11,7 +12,9 @@ import com.martin.car_rent.service.VehicleService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Service;
+
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -73,9 +76,21 @@ public class RentalServiceImpl implements RentalService {
     }
 
     @Override
-    public boolean returnRental(String vehicleId, String userId) {
-        return rentalRepository.findByVehicleIdAndUserIdAndReturnDateIsNull(vehicleId, userId).isPresent();
+    public Rental returnRental(String vehicleId, String userId) {
+        if (isVehicleRented(vehicleId)) {
+            Optional<Rental> rental = findActiveRentalByVehicleId(vehicleId);
+            if (rental.isPresent()) {
+                Rental activeRental = rental.get();
+                activeRental.setReturnDate(String.valueOf(LocalDateTime.now()));
+                rentalRepository.save(activeRental);
+                return activeRental;
+            }
+            }
+
+
+        return null;
     }
+
 
     @Override
     public List<Rental> findAll() {

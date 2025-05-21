@@ -13,7 +13,7 @@ public interface RentalService {
 
     Rental rent(String vehicleId, String userId);
 
-    boolean returnRental(String vehicleId, String userId);
+    Rental returnRental(String vehicleId, String userId);
 
     List<Rental> findAll();
 }

@@ -9,7 +9,6 @@ import java.util.Optional;
 import java.util.Set;
 @Repository
 public interface RentalRepository extends JpaRepository<Rental, String> {
-    // Methods findAll(), findById(), save(), deleteById() fromJpaRepository.
     Optional<Rental> findByVehicleIdAndReturnDateIsNull(String vehicleId);
     Optional<Rental> findByVehicleIdAndUserIdAndReturnDateIsNull(String vehicleId, String userId);
     boolean existsByVehicleIdAndReturnDateIsNull(String vehicleId);
