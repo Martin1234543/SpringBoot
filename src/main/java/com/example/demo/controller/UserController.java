@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
@@ -80,14 +81,28 @@ public class UserController {
     }
 
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteUser(@PathVariable String id) {
+//    @DeleteMapping("/{id}")
+//    public ResponseEntity<String> deleteUser(@PathVariable String id) {
+//        try {
+//            userService.deleteById(id);
+//            return ResponseEntity.ok("User with ID: " + id + " deleted.");
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+//        }
+//    }
+    @PostMapping("/removeUser")
+    public ResponseEntity<String> removeUser(@RequestBody String userId) {
         try {
-            userService.deleteById(id);
-            return ResponseEntity.ok("User with ID: " + id + " deleted.");
-        } catch (Exception e) {
-            e.printStackTrace();
+            userService.deleteById(userId);
+            return ResponseEntity.status(HttpStatus.CREATED).build();
+        }catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+
+    }
+    @PostMapping("/show")
+    public List<User> showUser() {
+        return userService.findAll();
     }
 }

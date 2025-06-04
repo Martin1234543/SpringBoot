@@ -38,6 +38,7 @@ import java.util.UUID;
                 .login(req.getLogin())
                 .password(passwordEncoder.encode(req.getPassword()))
                 .roles(Set.of(userRole))
+                .isActive(true)
                 .build();
         userRepository.save(u);
     }
@@ -77,17 +78,20 @@ import java.util.UUID;
     }
 
     @Override
-    public void addRole(String login, String role) {
+    public void addRole(String login, String roleName) {
         Optional<User> user = userRepository.findByLogin(login);
-        if(user.isPresent()) {
-            Role roles = roleRepository.findByName(role).orElseThrow();
-            user.get().getRoles().add(roles);
-            userRepository.save(user.get());
+        if(user.isEmpty()) {
+            throw new IllegalStateException("User " + login + " not found.");
         }
+
+        Role role = roleRepository.findByName(roleName)
+                .orElseThrow(() -> new IllegalStateException("Role " + roleName + " not found."));
+        user.get().getRoles().add(role);
+        userRepository.save(user.get());
     }
     @Override
     public void removeRole(String login, String role) {
-        Optional<User> user = userRepository.findByIdAndIsActiveTrue(login);
+        Optional<User> user = userRepository.findByLogin(login);
         if(user.isEmpty()) {
             throw new IllegalStateException("User " + login + " not found.");
         }
