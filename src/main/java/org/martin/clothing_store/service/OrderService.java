@@ -12,7 +12,7 @@ public interface OrderService {
 
     //Optional<Rental> findActiveRentalByVehicleId(String vehicleId);
 
-    Orders buy(String clothingId, String userId, int quantity);
+    Orders buy(String userId);
 
     Orders returnClothing(String clothingId, String userId);
 

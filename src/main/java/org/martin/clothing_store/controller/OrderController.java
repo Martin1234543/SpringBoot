@@ -31,20 +31,8 @@ public class OrderController {
         this.orderService = orderService;
     }
 
-    @PostMapping("/buy")
-    public ResponseEntity<Orders> buyOrder(@RequestBody ClothingRequest clothingRequest, @AuthenticationPrincipal UserDetails userDetails) {
-        if (userDetails.isAccountNonExpired() && userDetails.isEnabled() && userDetails.isCredentialsNonExpired()) {
-            String login = userDetails.getUsername();
-            User user = userRepository.findByLogin(login)
-                    .orElseThrow(() -> new UsernameNotFoundException("Użytkownik nie znaleziony: " + login));
-            Orders orders = orderService.buy(clothingRequest.getClothingId(), user.getId(), clothingRequest.getQuantity());
-
-            return new ResponseEntity<>(orders, HttpStatus.OK);
-        }
-        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 
 
-    }
     @PostMapping("/return")
     public ResponseEntity<Orders>  returnOrder(@RequestBody IdRequest idRequest, @AuthenticationPrincipal UserDetails userDetails) {
         if (userDetails.isAccountNonExpired() && userDetails.isEnabled() && userDetails.isCredentialsNonExpired()) {

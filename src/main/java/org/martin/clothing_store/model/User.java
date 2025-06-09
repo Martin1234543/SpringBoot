@@ -7,6 +7,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Set;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
+import java.util.Collection;
+import java.util.stream.Collectors;
+
 @Entity
 @Table(name = "users")
 @Data
@@ -23,9 +30,6 @@ public class User {
 
     @Column(nullable = false)
     private String password;
-
-    /*@Column(nullable = false)
-    private String role;*/
 
     @Column(name = "is_active")
     @Builder.Default

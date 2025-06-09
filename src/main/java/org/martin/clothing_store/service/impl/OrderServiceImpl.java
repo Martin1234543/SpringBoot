@@ -1,7 +1,9 @@
 package org.martin.clothing_store.service.impl;
 
+import org.martin.clothing_store.model.Cart;
 import org.martin.clothing_store.model.Clothing;
 import org.martin.clothing_store.model.Orders;
+import org.martin.clothing_store.repository.CartRepository;
 import org.martin.clothing_store.repository.ClothingRepository;
 import org.martin.clothing_store.repository.OrderRepository;
 import org.martin.clothing_store.service.OrderService;
@@ -10,6 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,36 +21,74 @@ import java.util.UUID;
 public class OrderServiceImpl implements OrderService {
     ClothingRepository  clothingRepository;
     OrderRepository orderRepository;
+    CartRepository cartRepository;
     @Autowired
-    public OrderServiceImpl(ClothingRepository clothingRepository, OrderRepository orderRepository) {
+    public OrderServiceImpl(CartRepository cartRepository, ClothingRepository clothingRepository, OrderRepository orderRepository) {
         this.clothingRepository = clothingRepository;
         this.orderRepository = orderRepository;
+        this.cartRepository = cartRepository;
 
     }
     @Override
     public boolean isClothingAvailable(String clothingId) {
         return clothingRepository.findById(clothingId).isPresent();
     }
-
     @Override
-    public Orders buy(String clothingId, String userId, int quantity) {
-        Optional<Clothing> clothing = clothingRepository.findById(clothingId);
-        if(clothing.isPresent()&&clothing.get().getQuantity()>quantity&&clothing.get().isActive()) {
-            clothing.get().setQuantity(clothing.get().getQuantity()-quantity);
-            clothingRepository.save(clothing.get());
-            Orders orders = new Orders();
-            orders.setId(UUID.randomUUID().toString());
-            orders.setClothingId(clothingId);
-            orders.setUserId(userId);
-            orders.setStatus("bought");
-            orders.setTotalAmount(String.valueOf(quantity));
-            orders.setOrderDate(LocalDateTime.now().toString());
-            orderRepository.save(orders);
-            return orders;
+    public Orders buy(String userId) {
+        Cart cart = cartRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Koszyk użytkownika nie istnieje."));
+
+        if (cart.getItemsId() == null || cart.getItemsId().isEmpty()) {
+            throw new IllegalStateException("Koszyk jest pusty.");
         }
-        System.out.println("Error buying clothing");
-        return null;
+
+        String[] entries = cart.getItemsId().split(",");
+        double total = 0.0;
+
+        List<String> failedItems = new ArrayList<>();
+
+        for (String entry : entries) {
+            String[] parts = entry.split(":");
+            if (parts.length != 2) continue;
+
+            String clothingId = parts[0];
+            int quantity = Integer.parseInt(parts[1]);
+
+            Optional<Clothing> clothingOpt = clothingRepository.findById(clothingId);
+            if (clothingOpt.isPresent()) {
+                Clothing clothing = clothingOpt.get();
+
+                if (clothing.getQuantity() >= quantity && clothing.isActive()) {
+                    clothing.setQuantity(clothing.getQuantity() - quantity);
+                    clothingRepository.save(clothing);
+                    total += clothing.getPrice().doubleValue() * quantity;
+                } else {
+                    failedItems.add(clothingId);
+                }
+            } else {
+                failedItems.add(clothingId);
+            }
+        }
+
+        if (total == 0) {
+            throw new IllegalStateException("Nie można zrealizować zamówienia – brak dostępnych produktów.");
+        }
+
+        Orders order = new Orders();
+        order.setId(UUID.randomUUID().toString());
+        order.setUserId(userId);
+        order.setOrderDate(LocalDateTime.now().toString());
+        order.setTotalAmount(String.valueOf(total));
+        order.setStatus("bought");
+        orderRepository.save(order);
+
+        // Wyczyść koszyk
+        cart.setItemsId("");
+        cartRepository.save(cart);
+
+        return order;
     }
+
 
     @Override
     public Orders returnClothing(String clothingId, String userId) {
