@@ -82,7 +82,6 @@ public class CartController {
 
         List<Clothing> clothes = clothingRepository.findAllById(itemMap.keySet());
 
-        // Zwracamy również ilości
         List<Map<String, Object>> response = clothes.stream().map(c -> {
             Map<String, Object> item = new HashMap<>();
             item.put("item", c);

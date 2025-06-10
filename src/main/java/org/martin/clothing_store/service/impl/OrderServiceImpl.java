@@ -12,10 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -33,26 +30,36 @@ public class OrderServiceImpl implements OrderService {
     public boolean isClothingAvailable(String clothingId) {
         return clothingRepository.findById(clothingId).isPresent();
     }
+    private Map<String, Integer> parseItems(String itemsId) {
+        Map<String, Integer> map = new HashMap<>();
+        if (itemsId == null || itemsId.isBlank()) return map;
+
+        for (String pair : itemsId.split(",")) {
+            String[] parts = pair.split(":");
+            if (parts.length == 2) {
+                try {
+                    map.put(parts[0], Integer.parseInt(parts[1]));
+                } catch (NumberFormatException ignored) {}
+            }
+        }
+        return map;
+    }
+
     @Override
     public Orders buy(String userId) {
-        Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Koszyk użytkownika nie istnieje."));
+        Optional<Cart> cartOpt = cartRepository.findByUserId(userId);
+        if (cartOpt.isEmpty()) return null;
 
-        if (cart.getItemsId() == null || cart.getItemsId().isEmpty()) {
-            throw new IllegalStateException("Koszyk jest pusty.");
-        }
+        Cart cart = cartOpt.get();
+        Map<String, Integer> itemMap = parseItems(cart.getItemsId());
+        if (itemMap.isEmpty()) return null;
 
-        String[] entries = cart.getItemsId().split(",");
-        double total = 0.0;
+        List<String> boughtIds = new ArrayList<>();
+        double totalAmount = 0;
 
-        List<String> failedItems = new ArrayList<>();
-
-        for (String entry : entries) {
-            String[] parts = entry.split(":");
-            if (parts.length != 2) continue;
-
-            String clothingId = parts[0];
-            int quantity = Integer.parseInt(parts[1]);
+        for (Map.Entry<String, Integer> entry : itemMap.entrySet()) {
+            String clothingId = entry.getKey();
+            int quantity = entry.getValue();
 
             Optional<Clothing> clothingOpt = clothingRepository.findById(clothingId);
             if (clothingOpt.isPresent()) {
@@ -61,33 +68,32 @@ public class OrderServiceImpl implements OrderService {
                 if (clothing.getQuantity() >= quantity && clothing.isActive()) {
                     clothing.setQuantity(clothing.getQuantity() - quantity);
                     clothingRepository.save(clothing);
-                    total += clothing.getPrice().doubleValue() * quantity;
-                } else {
-                    failedItems.add(clothingId);
+
+                    totalAmount += clothing.getPrice().doubleValue() * quantity;
+                    boughtIds.add(clothingId);
                 }
-            } else {
-                failedItems.add(clothingId);
             }
         }
 
-        if (total == 0) {
-            throw new IllegalStateException("Nie można zrealizować zamówienia – brak dostępnych produktów.");
-        }
+        if (boughtIds.isEmpty()) return null;
 
         Orders order = new Orders();
         order.setId(UUID.randomUUID().toString());
         order.setUserId(userId);
         order.setOrderDate(LocalDateTime.now().toString());
-        order.setTotalAmount(String.valueOf(total));
         order.setStatus("bought");
+        order.setTotalAmount(String.valueOf(totalAmount));
+        order.setClothingId(String.join(",", boughtIds)); // tu zapisujemy ID
+
         orderRepository.save(order);
 
-        // Wyczyść koszyk
-        cart.setItemsId("");
+        // czyścimy koszyk
+        cart.setItemsId(null);
         cartRepository.save(cart);
 
         return order;
     }
+
 
 
     @Override

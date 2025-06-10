@@ -25,7 +25,7 @@ public class ClothingController {
     private final UserRepository userRepository;
     private final UserService userService;
 
-    // 🔹 Dodaj nowe ubranie
+
     @PostMapping("/clothing")
     public ResponseEntity<Clothing> addClothing(@RequestBody Clothing clothing) {
         clothing.setId(UUID.randomUUID().toString());
@@ -34,7 +34,7 @@ public class ClothingController {
         return ResponseEntity.ok(saved);
     }
 
-    // 🔹 Dezaktywuj ubranie
+
     @PutMapping("/clothing/{id}/deactivate")
     public ResponseEntity<?> deactivateClothing(@PathVariable String id) {
         Optional<Clothing> clothingOpt = clothingRepository.findById(id);
@@ -48,15 +48,17 @@ public class ClothingController {
         }
     }
 
-    // 🔹 Wyświetl wszystkie zamówienia
     @GetMapping("/orders")
     public ResponseEntity<List<Orders>> getAllOrders() {
         return ResponseEntity.ok(orderRepository.findAll());
     }
 
-    // 🔹 Wyświetl wszystkich użytkowników
     @GetMapping("/users")
     public ResponseEntity<List<User>> getAllUsers() {
         return ResponseEntity.ok(userService.findAll());
+    }
+    @GetMapping("/show")
+    public ResponseEntity<List<Clothing>> getAllClothing() {
+        return ResponseEntity.ok(clothingRepository.findAll());
     }
 }
