@@ -14,7 +14,7 @@ public interface OrderService {
 
     Orders buy(String userId);
 
-    Orders returnClothing(String clothingId, String userId);
+    Orders returnClothing(String orderId, String userId);
 
     List<Orders> findAll();
 }

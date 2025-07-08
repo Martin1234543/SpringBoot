@@ -31,4 +31,6 @@ public class Orders {
     private String status;
     @Column(name = "clothingId")
     private String clothingId;
+    @Column(name = "quantity")
+    private  String quantity;
 }

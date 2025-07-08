@@ -91,10 +91,11 @@ public class UserController {
 
     @GetMapping("/test-role")
     public String testRole(@AuthenticationPrincipal UserDetails userDetails) {
+
         Optional<User> user = userService.findByLogin(userDetails.getUsername());
 
         if (user.isPresent()&&user.get().isActive()) {
-            return "Twoje role: " + userDetails.getAuthorities();
+            return "Your roles: " + userDetails.getAuthorities();
         }else {
           return("Access denied");
         }

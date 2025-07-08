@@ -26,7 +26,7 @@ public class Clothing {
     @Column(name = "quantity")
     private int quantity;
     @Column(name = "price", columnDefinition = "NUMERIC")
-    private BigDecimal price;
+    private double price;
     @Column(name = "is_active")
     private boolean isActive;
 }

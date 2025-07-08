@@ -35,14 +35,17 @@ public class CartController {
     }
 
     @PostMapping("/add")
-    public ResponseEntity<Cart> addToCart(@RequestBody List<ClothingRequest> clothingRequests,
+    public ResponseEntity<?> addToCart(@RequestBody List<ClothingRequest> clothingRequests,
                                           @AuthenticationPrincipal UserDetails userDetails) {
-        String login = userDetails.getUsername();
-        User user = userRepository.findByLogin(login)
-                .orElseThrow(() -> new UsernameNotFoundException("Użytkownik nie znaleziony: " + login));
+        Optional<User> user = userRepository.findByLogin(userDetails.getUsername());
+        if (user.isPresent() && user.get().isActive()) {
 
-        Cart updatedCart = cartService.addToCart(user.getId(), clothingRequests);
-        return new ResponseEntity<>(updatedCart, HttpStatus.OK);
+            Cart updatedCart = cartService.addToCart(user.get().getId(), clothingRequests);
+            if (updatedCart == null) return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bad quantity.");
+
+            return new ResponseEntity<>(updatedCart, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
     private Map<String, Integer> parseItems(String itemsId) {
         Map<String, Integer> map = new HashMap<>();
@@ -70,6 +73,7 @@ public class CartController {
 
     @GetMapping
     public ResponseEntity<List<Map<String, Object>>> viewCart(@AuthenticationPrincipal UserDetails userDetails) {
+
         String login = userDetails.getUsername();
         User user = userRepository.findByLogin(login).orElse(null);
         if (user == null) return ResponseEntity.status(401).build();
@@ -96,26 +100,32 @@ public class CartController {
     @DeleteMapping("/remove")
     public ResponseEntity<String> removeFromCart(@RequestBody Map<String, String> body,
                                                  @AuthenticationPrincipal UserDetails userDetails) {
-        String clothingId = body.get("clothingId");
-        if (clothingId == null || clothingId.isBlank()) return ResponseEntity.badRequest().body("Missing clothingId");
+        if (userDetails.isAccountNonExpired() && userDetails.isEnabled() && userDetails.isCredentialsNonExpired()) {
+            String clothingId = body.get("clothingId");
+            if (clothingId == null || clothingId.isBlank())
+                return ResponseEntity.badRequest().body("Missing clothingId");
 
-        String login = userDetails.getUsername();
-        User user = userRepository.findByLogin(login).orElse(null);
-        if (user == null) return ResponseEntity.status(401).build();
+            String login = userDetails.getUsername();
+            User user = userRepository.findByLogin(login).orElse(null);
+            if (user == null||!user.isActive()) return ResponseEntity.status(401).build();
 
-        Optional<Cart> cartOpt = cartRepository.findByUserId(user.getId());
-        if (cartOpt.isEmpty()) return ResponseEntity.badRequest().body("Cart not found");
+            Optional<Cart> cartOpt = cartRepository.findByUserId(user.getId());
+            if (cartOpt.isEmpty()) return ResponseEntity.badRequest().body("Cart not found");
 
-        Cart cart = cartOpt.get();
-        Map<String, Integer> itemMap = parseItems(cart.getItemsId());
+            Cart cart = cartOpt.get();
+            Map<String, Integer> itemMap = parseItems(cart.getItemsId());
 
-        if (itemMap.containsKey(clothingId)) {
-            itemMap.remove(clothingId);
-            cart.setItemsId(stringifyItems(itemMap));
-            cartRepository.save(cart);
-            return ResponseEntity.ok("Item removed from cart");
+            if (itemMap.containsKey(clothingId)) {
+                itemMap.remove(clothingId);
+                cart.setItemsId(stringifyItems(itemMap));
+                cartRepository.save(cart);
+                return ResponseEntity.ok("Item removed from cart");
+            } else {
+                return ResponseEntity.badRequest().body("Item not in cart");
+            }
+
         } else {
-            return ResponseEntity.badRequest().body("Item not in cart");
+            return ResponseEntity.status(401).build();
         }
     }
 

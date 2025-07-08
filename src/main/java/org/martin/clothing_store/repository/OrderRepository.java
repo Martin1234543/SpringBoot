@@ -17,6 +17,8 @@ public interface OrderRepository extends JpaRepository<Orders, String> {
     // Znajdź zamówienie po ID użytkownika i statusie (np. tylko aktywne, złożone)
     Optional<Orders> findByUserIdAndStatus(String userId, String status);
 
+    Optional<Orders> findById(String Id);
+
 //    // Przykład zapytania JPQL do pobrania zamówień z produktami
 //    @Query("SELECT o FROM Orders o JOIN FETCH o.user u WHERE u.id = :userId")
 //    List<Orders> findAllWithUserByUserId( String userId);

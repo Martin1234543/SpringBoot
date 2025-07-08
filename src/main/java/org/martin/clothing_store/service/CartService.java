@@ -17,10 +17,12 @@ public class CartService {
     private final CartRepository cartRepository;
     private final ClothingRepository clothingRepository;
 
+
     @Autowired
     public CartService(CartRepository cartRepository, ClothingRepository clothingRepository) {
         this.cartRepository = cartRepository;
         this.clothingRepository = clothingRepository;
+
     }
 
     public Cart addToCart(String userId, List<ClothingRequest> clothingRequests) {
@@ -28,13 +30,12 @@ public class CartService {
                 Cart.builder()
                         .id(UUID.randomUUID().toString())
                         .userId(userId)
-                        .itemsId("") // jako string z ID+ilością
+                        .itemsId("")
                         .build()
         );
 
         Map<String, Integer> currentItems = new LinkedHashMap<>();
 
-        // Wczytaj istniejące wpisy
         if (cart.getItemsId() != null && !cart.getItemsId().isEmpty()) {
             String[] entries = cart.getItemsId().split(",");
             for (String entry : entries) {
@@ -45,16 +46,16 @@ public class CartService {
             }
         }
 
-        // Dodaj nowe elementy
         for (ClothingRequest request : clothingRequests) {
             Clothing clothing = clothingRepository.findById(request.getClothingId())
                     .filter(Clothing::isActive)
-                    .orElseThrow(() -> new IllegalArgumentException("Nieprawidłowe ID lub nieaktywne ubranie: " + request.getClothingId()));
-
+                    .orElseThrow(() -> new IllegalArgumentException("Item not available: " + request.getClothingId()));
+            if (clothing.getQuantity() < request.getQuantity()) {
+                return null;
+            }
             currentItems.merge(request.getClothingId(), request.getQuantity(), Integer::sum);
         }
 
-        // Zbuduj string itemsId w formacie: clothingId:quantity,clothingId:quantity
         String newItemsId = currentItems.entrySet().stream()
                 .map(e -> e.getKey() + ":" + e.getValue())
                 .collect(Collectors.joining(","));

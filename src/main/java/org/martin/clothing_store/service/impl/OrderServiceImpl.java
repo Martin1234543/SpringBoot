@@ -55,6 +55,7 @@ public class OrderServiceImpl implements OrderService {
         if (itemMap.isEmpty()) return null;
 
         List<String> boughtIds = new ArrayList<>();
+        List<String> boughtQuantities = new ArrayList<>();
         double totalAmount = 0;
 
         for (Map.Entry<String, Integer> entry : itemMap.entrySet()) {
@@ -69,8 +70,11 @@ public class OrderServiceImpl implements OrderService {
                     clothing.setQuantity(clothing.getQuantity() - quantity);
                     clothingRepository.save(clothing);
 
-                    totalAmount += clothing.getPrice().doubleValue() * quantity;
+                    totalAmount += clothing.getPrice() * quantity;
                     boughtIds.add(clothingId);
+                    boughtQuantities.add(String.valueOf(quantity));
+                } else {
+                    return null;
                 }
             }
         }
@@ -83,11 +87,10 @@ public class OrderServiceImpl implements OrderService {
         order.setOrderDate(LocalDateTime.now().toString());
         order.setStatus("bought");
         order.setTotalAmount(String.valueOf(totalAmount));
-        order.setClothingId(String.join(",", boughtIds)); // tu zapisujemy ID
-
+        order.setClothingId(String.join(",", boughtIds));
+        order.setQuantity(String.join(",", boughtQuantities));
         orderRepository.save(order);
 
-        // czyścimy koszyk
         cart.setItemsId(null);
         cartRepository.save(cart);
 
@@ -96,22 +99,44 @@ public class OrderServiceImpl implements OrderService {
 
 
 
-    @Override
-    public Orders returnClothing(String clothingId, String userId) {
 
-        Optional<Orders> orders = orderRepository.findById(clothingId);
-        if(orders.isPresent()&&orders.get().getStatus().equals("bought")&&orders.get().getUserId().equals(userId)) {
-            Optional<Clothing> clothing = clothingRepository.findById(clothingId);
-            if (clothing.isPresent()) {
-                clothing.get().setQuantity(clothing.get().getQuantity()+Integer.parseInt(orders.get().getTotalAmount()));
-                clothingRepository.save(clothing.get());
-                orders.get().setStatus("returned");
-                orderRepository.save(orders.get());
-                return orders.get();
+    @Override
+    public Orders returnClothing(String orderId, String userId) {
+        Optional<Orders> ordersOpt = orderRepository.findById(orderId);
+        if (ordersOpt.isEmpty()) return null;
+
+        Orders order = ordersOpt.get();
+
+        if (!order.getUserId().equals(userId) || !order.getStatus().equals("bought")) {
+            return null;
+        }
+
+        String[] clothingIds = order.getClothingId().split(",");
+        String[] quantities = order.getQuantity().split(",");
+
+        if (clothingIds.length != quantities.length) {
+            // Dane są nieprawidłowe
+            return null;
+        }
+
+        for (int i = 0; i < clothingIds.length; i++) {
+            String clothingId = clothingIds[i];
+            int quantity = Integer.parseInt(quantities[i]);
+
+            Optional<Clothing> clothingOpt = clothingRepository.findById(clothingId);
+            if (clothingOpt.isPresent()) {
+                Clothing clothing = clothingOpt.get();
+                clothing.setQuantity(clothing.getQuantity() + quantity);
+                clothingRepository.save(clothing);
             }
         }
-        return null;
+
+        order.setStatus("returned");
+        orderRepository.save(order);
+        return order;
     }
+
+
 
     @Override
     public List<Orders> findAll() {

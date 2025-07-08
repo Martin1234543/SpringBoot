@@ -38,16 +38,18 @@ public class OrderController {
         this.orderRepository = orderRepository;
     }
     @PostMapping("/buy")
-    public ResponseEntity<Orders> buyAllFromCart(@AuthenticationPrincipal UserDetails userDetails) {
-        if (userDetails.isAccountNonExpired() && userDetails.isEnabled() && userDetails.isCredentialsNonExpired()) {
-            String login = userDetails.getUsername();
-            User user = userRepository.findByLogin(login)
-                    .orElseThrow(() -> new UsernameNotFoundException("Użytkownik nie znaleziony: " + login));
-            Orders orders = orderService.buy(user.getId());
+    public ResponseEntity<?> buyAllFromCart(@AuthenticationPrincipal UserDetails userDetails) {
+        Optional<User> user = userRepository.findByLogin(userDetails.getUsername());
+        if (user.isPresent() && user.get().isActive()) {
+            Orders orders = orderService.buy(user.get().getId());
+            if (orders == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Wrong quantity.");
+            }
 
-            return new ResponseEntity<>(orders, HttpStatus.OK);
+            return ResponseEntity.ok(orders);
         }
-        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found.");
     }
 
 
@@ -57,25 +59,31 @@ public class OrderController {
 
     @PostMapping("/return")
     public ResponseEntity<Orders>  returnOrder(@RequestBody IdRequest idRequest, @AuthenticationPrincipal UserDetails userDetails) {
-        if (userDetails.isAccountNonExpired() && userDetails.isEnabled() && userDetails.isCredentialsNonExpired()) {
-            String login = userDetails.getUsername();
-            User user= userRepository.findByLogin(login).orElseThrow(()->new UsernameNotFoundException("User not found: "+ login));
-            Orders orders= orderService.returnClothing(idRequest.getId(), user.getId());
+        Optional<User> user = userRepository.findByLogin(userDetails.getUsername());
+        if (user.isPresent() && user.get().isActive()) {
+            Orders orders= orderService.returnClothing(idRequest.getId(), user.get().getId());
             return new ResponseEntity<>(orders, HttpStatus.OK);
         }
         return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
     }
     @GetMapping("/show")
     public ResponseEntity<List<Orders>> getAllOrders(@AuthenticationPrincipal UserDetails userDetails) {
-        if (userDetails.isAccountNonExpired() && userDetails.isEnabled() && userDetails.isCredentialsNonExpired()&&userDetails.isCredentialsNonExpired()) {
-            String login = userDetails.getUsername();
-            Optional<User> user= userRepository.findByLogin(login);
-            if(user.isPresent()){
+        Optional<User> user = userRepository.findByLogin(userDetails.getUsername());
+        if (user.isPresent() && user.get().isActive()) {
                 return new ResponseEntity<>(orderRepository.findByUserId(user.get().getId()),  HttpStatus.OK);
 
-            }
         }
         return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 
+    }
+    @GetMapping("/showAll")
+    public ResponseEntity<List<Clothing>>  getAllAvailableClothing(@AuthenticationPrincipal UserDetails userDetails) {
+        Optional<User> user = userRepository.findByLogin(userDetails.getUsername());
+        if (user.isPresent() && user.get().isActive()) {
+
+            return new ResponseEntity<>(clothingRepository.findAvailableClothing(), HttpStatus.OK);
+        }
+
+        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
     }
 }
