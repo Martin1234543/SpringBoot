@@ -76,14 +76,9 @@ public class OrderController {
         return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 
     }
-    @GetMapping("/showAll")
-    public ResponseEntity<List<Clothing>>  getAllAvailableClothing(@AuthenticationPrincipal UserDetails userDetails) {
-        Optional<User> user = userRepository.findByLogin(userDetails.getUsername());
-        if (user.isPresent() && user.get().isActive()) {
-
-            return new ResponseEntity<>(clothingRepository.findAvailableClothing(), HttpStatus.OK);
-        }
-
-        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+    @GetMapping("/orders")
+    public ResponseEntity<List<Orders>> getAllOrders() {
+        return ResponseEntity.ok(orderRepository.findAll());
     }
+
 }

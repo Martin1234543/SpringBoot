@@ -98,10 +98,10 @@ public class CartController {
 
 
     @DeleteMapping("/remove")
-    public ResponseEntity<String> removeFromCart(@RequestBody Map<String, String> body,
+    public ResponseEntity<String> removeFromCart(@RequestBody IdRequest id,
                                                  @AuthenticationPrincipal UserDetails userDetails) {
         if (userDetails.isAccountNonExpired() && userDetails.isEnabled() && userDetails.isCredentialsNonExpired()) {
-            String clothingId = body.get("clothingId");
+            String clothingId = id.getId();
             if (clothingId == null || clothingId.isBlank())
                 return ResponseEntity.badRequest().body("Missing clothingId");
 

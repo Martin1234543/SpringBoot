@@ -9,6 +9,7 @@ import org.martin.clothing_store.repository.ClothingRepository;
 import org.martin.clothing_store.repository.OrderRepository;
 import org.martin.clothing_store.repository.UserRepository;
 import org.martin.clothing_store.service.UserService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,7 +20,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/admin")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class ClothingController {
 
@@ -50,18 +51,34 @@ public class ClothingController {
             return ResponseEntity.notFound().build();
         }
     }
-
-    @GetMapping("/orders")
-    public ResponseEntity<List<Orders>> getAllOrders() {
-        return ResponseEntity.ok(orderRepository.findAll());
+    @PostMapping("/clothing/activate")
+    public ResponseEntity<?> activateClothing(@RequestBody IdRequest id, @AuthenticationPrincipal UserDetails userDetails) {
+        Optional<Clothing> clothingOpt = clothingRepository.findById(id.getId());
+        if (clothingOpt.isPresent()&& !clothingOpt.get().isActive()) {
+            Clothing clothing = clothingOpt.get();
+            clothing.setActive(true);
+            clothingRepository.save(clothing);
+            return ResponseEntity.ok("Clothing activated.");
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
-    @GetMapping("/users")
-    public ResponseEntity<List<User>> getAllUsers() {
-        return ResponseEntity.ok(userService.findAll());
-    }
+
+
     @GetMapping("/show")
     public ResponseEntity<List<Clothing>> getAllClothing() {
-        return ResponseEntity.ok(clothingRepository.findAll());
+        return new ResponseEntity<>(clothingRepository.findAvailableClothing(), HttpStatus.OK);
+
+    }
+    @GetMapping("/showAll")
+    public ResponseEntity<List<Clothing>>  getAllAvailableClothing(@AuthenticationPrincipal UserDetails userDetails) {
+        Optional<User> user = userRepository.findByLogin(userDetails.getUsername());
+        if (user.isPresent() && user.get().isActive()) {
+
+            return ResponseEntity.ok(clothingRepository.findAll());
+        }
+
+        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
     }
 }

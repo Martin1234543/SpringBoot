@@ -26,65 +26,54 @@ public class UserController {
         this.userService = userService;
     }
 
-    @GetMapping
-    public List<User> getAllUsers() {
-        return userService.findAll();
-    }
+//    @GetMapping
+//    public List<User> getAllUsers() {
+//        return userService.findAll();
+//    }
     @PostMapping("/addRole")
-    public ResponseEntity<User> addRole(@RequestBody RoleRequest roleRequest) {
-        try {
-            userService.addRole(roleRequest.getLogin(), roleRequest.getRole());
-            return ResponseEntity.status(HttpStatus.CREATED).build();
-        }catch (Exception e) {
+    public ResponseEntity<User> addRole(@RequestBody RoleRequest roleRequest, @AuthenticationPrincipal UserDetails userDetails) {
+        Optional<User> user = userService.findByLogin(userDetails.getUsername());
+
+        if (user.isPresent() && user.get().isActive()) {
+            try {
+                userService.addRole(roleRequest.getLogin(), roleRequest.getRole());
+                return ResponseEntity.status(HttpStatus.CREATED).build();
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+        } else {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
     @PostMapping("/removeRole")
-    public ResponseEntity<User> removeRole(@RequestBody RoleRequest roleRequest) {
-        try {
-            userService.removeRole(roleRequest.getLogin(), roleRequest.getRole());
-            return ResponseEntity.status(HttpStatus.CREATED).build();
-        }catch (Exception e) {
+    public ResponseEntity<User> removeRole(@RequestBody RoleRequest roleRequest, @AuthenticationPrincipal UserDetails userDetails) {
+        Optional<User> user = userService.findByLogin(userDetails.getUsername());
+
+        if (user.isPresent() && user.get().isActive()) {
+            try {
+                userService.removeRole(roleRequest.getLogin(), roleRequest.getRole());
+                return ResponseEntity.status(HttpStatus.CREATED).build();
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+        } else {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-//
-//    @PostMapping("/{userId}/roles/add")
-//    public ResponseEntity<String> addRoleToUser(@RequestParam String roleName, @PathVariable String userId) {
-//        try {
-//            if(roleName == null || roleName.isEmpty()) {
-//                return ResponseEntity.badRequest().body("Role name is required!");
-//            }
-//
-//            userService.addToUser(userId, roleName);
-//            return ResponseEntity.ok("Role " + roleName + "has been added to user with ID: " + userId);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-//        }
-//    }
 
-//    @PostMapping("/{userId}/roles/remove")
-//    public ResponseEntity<String> removeRoleFromUser(@RequestParam String roleName, @PathVariable String userId) {
-//        try {
-//            if(roleName == null || roleName.isEmpty()) {
-//                return ResponseEntity.badRequest().body("Role name is required!");
-//            }
-//
-//            userService.removeRoleFromUser(userId, roleName);
-//            return ResponseEntity.ok("Role " + roleName + " has been removed from user with ID: " + userId);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-//        }
-//    }
     @PostMapping("/deleteUser")
-    public ResponseEntity<User> deleteUser(@RequestBody IdRequest idRequest) {
-        try {
-            userService.deleteById(idRequest.getId());
+    public ResponseEntity<User> deleteUser(@RequestBody IdRequest idRequest, @AuthenticationPrincipal UserDetails userDetails) {
+        Optional<User> user = userService.findByLogin(userDetails.getUsername());
 
-            return ResponseEntity.status(HttpStatus.CREATED).build();
-        }catch (Exception e) {
+        if (user.isPresent() && user.get().isActive()) {
+            try {
+                userService.deleteById(idRequest.getId());
+
+                return ResponseEntity.status(HttpStatus.CREATED).build();
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+        } else {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -114,23 +103,38 @@ public class UserController {
 //        }
 //    }
     @PostMapping("/removeUser")
-    public ResponseEntity<String> removeUser(@RequestBody String userId) {
-        try {
-            userService.deleteById(userId);
-            return ResponseEntity.status(HttpStatus.CREATED).build();
-        }catch (Exception e) {
+    public ResponseEntity<String> removeUser(@RequestBody IdRequest idRequest, @AuthenticationPrincipal  UserDetails userDetails) {
+        Optional<User> user = userService.findByLogin(userDetails.getUsername());
+
+        if (user.isPresent()&&user.get().isActive()) {
+            try {
+                userService.deleteById(idRequest.getId());
+                return ResponseEntity.status(HttpStatus.CREATED).build();
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+        }else {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
 
     }
     @GetMapping("/show")
     public ResponseEntity<List<User>> showUser(@AuthenticationPrincipal UserDetails userDetails ) {
+        Optional<User> user = userService.findByLogin(userDetails.getUsername());
 
-        try {
-        List<User> users = userService.findAll();
-        return ResponseEntity.ok(users);
-    }catch (Exception e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        if (user.isPresent()&&user.get().isActive()) {
+            try {
+                List<User> users = userService.findAll();
+                return ResponseEntity.ok(users);
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+        }else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+    @GetMapping("/users")
+    public ResponseEntity<List<User>> getAllUsers() {
+        return ResponseEntity.ok(userService.findAll());
     }
 }
