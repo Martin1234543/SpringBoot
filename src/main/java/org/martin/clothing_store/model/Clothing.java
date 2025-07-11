@@ -29,4 +29,5 @@ public class Clothing {
     private double price;
     @Column(name = "is_active")
     private boolean isActive;
+
 }

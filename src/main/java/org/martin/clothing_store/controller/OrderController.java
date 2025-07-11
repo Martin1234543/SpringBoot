@@ -1,5 +1,6 @@
 package org.martin.clothing_store.controller;
 
+import org.aspectj.weaver.ast.Or;
 import org.martin.clothing_store.dto.ClothingRequest;
 import org.martin.clothing_store.dto.IdRequest;
 import org.martin.clothing_store.model.Cart;
@@ -79,6 +80,22 @@ public class OrderController {
     @GetMapping("/orders")
     public ResponseEntity<List<Orders>> getAllOrders() {
         return ResponseEntity.ok(orderRepository.findAll());
+    }
+    @PostMapping("/cancel")
+    public ResponseEntity<?> cancelOrder(@RequestBody IdRequest idRequest, @AuthenticationPrincipal UserDetails userDetails) {
+        Optional<User> user = userRepository.findByLogin(userDetails.getUsername());
+        if (user.isPresent() && user.get().isActive()) {
+            Optional<Orders> orders= orderRepository.findById(idRequest.getId());
+            if (orders.isPresent()) {
+                orders.get().setStatus("cancelled");
+                orderRepository.save(orders.get());
+                return ResponseEntity.status(HttpStatus.OK).body("Order cancelled.");
+            }else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Order not found.");
+            }
+        }else{
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
     }
 
 }

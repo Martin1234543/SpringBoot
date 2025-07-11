@@ -2,6 +2,7 @@ package org.martin.clothing_store.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.martin.clothing_store.dto.IdRequest;
+import org.martin.clothing_store.dto.QuantityRequest;
 import org.martin.clothing_store.model.Clothing;
 import org.martin.clothing_store.model.Orders;
 import org.martin.clothing_store.model.User;
@@ -33,6 +34,9 @@ public class ClothingController {
     @PostMapping("/clothing")
     public ResponseEntity<Clothing> addClothing(@RequestBody Clothing clothing) {
         clothing.setId(clothing.getId());
+        if (clothingRepository.existsById(clothing.getId())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
         clothing.setActive(clothing.isActive());
         Clothing saved = clothingRepository.save(clothing);
         return ResponseEntity.ok(saved);
@@ -50,6 +54,18 @@ public class ClothingController {
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+    @PostMapping("/add")
+    public ResponseEntity<?> createClothing(@RequestBody QuantityRequest quantityRequest, AuthenticationPrincipal userDetails) {
+        Optional<Clothing> clothingOpt = clothingRepository.findById(quantityRequest.getId());
+        if (clothingOpt.isPresent()&& clothingOpt.get().isActive()) {
+            Clothing clothing = clothingOpt.get();
+            clothing.setQuantity(clothingOpt.get().getQuantity()+quantityRequest.getQuantity());
+            clothingRepository.save(clothing);
+            return ResponseEntity.ok("Quantity added." + clothing.getQuantity());
+
+        }
+        return ResponseEntity.notFound().build();
     }
     @PostMapping("/clothing/activate")
     public ResponseEntity<?> activateClothing(@RequestBody IdRequest id, @AuthenticationPrincipal UserDetails userDetails) {
